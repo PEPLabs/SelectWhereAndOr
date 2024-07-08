@@ -1,51 +1,50 @@
 
+import Model.Employee;
 import Util.ConnectionUtil;
+import Util.FileUtil;
 import org.junit.*;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
-public class FilteringLogicTest {
-    private final FilteringLogicActivity filteringLogicActivity = new FilteringLogicActivity();
+public class Lab5Test {
     private static Connection conn;
-
-
-
-    @Test
-    public void testActivityFindEmployeesAnd() {
-        Set<Employee> expectedList = new HashSet<>();
-        expectedList.add(new Employee(3, "Steve", "Jones", 99890.99));
-
-        Set<Employee> resultList = filteringLogicActivity.problem1();
-
-        assertEquals(expectedList, resultList);
-    }
-
-    @Test
-    public void testActivityFindEmployeesOr() {
-        Set<Employee> expectedList = new HashSet<>();
-        expectedList.add(new Employee(2, "Alexa", "Smith", 42500));
-        expectedList.add(new Employee(4, "Brandon", "Smith", 120000));
-
-        Set<Employee> resultList = filteringLogicActivity.problem2();
-
-        assertEquals(expectedList, resultList);
-    }
 
     @Test
     public void testActivityFindEmployeesNotIn() {
-        Set<Employee> expectedList = new HashSet<>();
-        expectedList.add(new Employee(5, "Adam", "Jones", 55050.50));
-        expectedList.add(new Employee(4, "Brandon", "Smith", 120000));
+        List<Employee> expectedList = new ArrayList<>();
+        Employee emp1 = new Employee(4, "Brandon", "Smith", 120000);
+        Employee emp2 = new Employee(5, "Adam", "Jones", 55050.50);
 
-        Set<Employee> resultList = filteringLogicActivity.problem3();
+        expectedList.add(emp1);
+        expectedList.add(emp2);
 
-        assertEquals(expectedList, resultList);
+        String sql = FileUtil.parseSQLFile("src/main/lab5.sql");
+        if(sql.isBlank()){
+            Assert.fail("No sql statement exists in lab5.sql.");
+        }
+        //The following code will execute your statement on the database
+        List<Employee> resultsList = new ArrayList<>();
+        try {
+            Connection connection = ConnectionUtil.getConnection();
+            Statement s = connection.createStatement();
+            ResultSet rs =s.executeQuery(sql);
+
+            while(rs.next()) {
+                resultsList.add(new Employee(rs.getInt(1), rs.getString(2), rs.getString(3), rs.getDouble(4)));
+            }
+        } catch (SQLException e) {
+            Assert.fail("There was an issue executing the SQL statement in lab5: "+e.getMessage());
+        }
+        assertTrue("The result should contain Brandon Smith, 120000", resultsList.contains(emp1));
+        assertTrue("The result should contain Adam Jones, 55050.50", resultsList.contains(emp2));
+        assertEquals("The result should not contain all results that are not Steve and over 50000. ", 2, resultsList.size());
     }
 
     @BeforeClass
@@ -72,7 +71,8 @@ public class FilteringLogicTest {
                     "('Alexa', 'Smith', 42500.00)," +
                     "('Steve', 'Jones', 99890.99)," +
                     "('Brandon', 'Smith', 120000)," +
-                    "('Adam', 'Jones', 55050.50);";
+                    "('Adam', 'Jones', 55050.50)," +
+                    "('Steve', 'Brown', 90000.50);";
             PreparedStatement insertDataStatement = conn.prepareStatement(insertData);
             insertDataStatement.executeUpdate();
 

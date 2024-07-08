@@ -1,3 +1,4 @@
+package Model;
 
 import java.util.Objects;
 
@@ -70,7 +71,7 @@ public class Employee {
 
     @Override
     public String toString() {
-        return "Employee{" +
+        return "Model.Employee{" +
                 "id=" + id +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
